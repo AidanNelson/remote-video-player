@@ -72,13 +72,8 @@ async function main() {
 
     socket.on("cmd", (data) => {
       console.log(`Received command:${data.type}`);
-      if (data.playerId === 0) {
-        // send to all
-        console.log(`Sending command: ${data.type} to all clients.`);
-        io.sockets.emit("cmd", data);
-      } else {
-        // TODO: address individual sockets
-      }
+      console.log(`Sending command: ${data.type} to all clients.`);
+      io.sockets.emit("cmd", data);
     });
   });
 }
