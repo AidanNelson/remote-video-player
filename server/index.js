@@ -3,6 +3,19 @@ const https = require("https");
 const devcert = require("devcert");
 const fs = require("fs");
 
+
+const Mux = require('@mux/mux-node');
+
+// make it possible to read credentials from .env files
+const dotenv = require('dotenv');
+dotenv.config();
+// assume process.env.MUX_TOKEN_ID and process.env.MUX_TOKEN_SECRET contain your credentials
+const muxClient = new Mux(); // Success!
+
+let availableVideos = [];
+
+
+
 async function main() {
   // Set up express to serve the admin console
   const app = express();
@@ -43,6 +56,20 @@ async function main() {
     console.log("Client connected:", socket.id);
     clients[socket.id] = {};
 
+    socket.on("getAvailableVideos", () => {
+      socket.emit("availableVideos", availableVideos);
+    })
+
+    socket.on("getAvailablePlayers", async () => {
+      const ids = await io.allSockets();
+      let idArray = Array.from(ids);
+      const data = {
+        ids: idArray
+      }
+      console.log('sending ',data);
+      socket.emit("availablePlayers", data);
+    })
+
     socket.on("cmd", (data) => {
       console.log(`Received command:${data.type}`);
       if (data.playerId === 0) {
@@ -57,3 +84,10 @@ async function main() {
 }
 
 main();
+
+
+
+async function getVideosFromMux(){
+ availableVideos = await muxClient.Video.Assets.list();
+}
+getVideosFromMux();
