@@ -1,40 +1,30 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
 import './App.css';
+import MuxVideo from '@mux/mux-video-react';
+import {useState, useEffect} from "react";
+import io from 'socket.io-client';
+
+const SERVER_URL = "https://aidan.town";
+const socket = io(SERVER_URL);
 
 const Hello = () => {
+  const currentPlaybackId = useCurrentPlaybackIdFromServer();
   return (
     <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
+      <MuxVideo
+        style={{ height: '100%', maxWidth: '100%' }}
+        playbackId={currentPlaybackId}
+        // metadata={{
+        //   video_id: 'video-id-123456',
+        //   video_title: 'Super Interesting Video',
+        //   viewer_user_id: 'user-id-bc-789',
+        // }}
+        streamType="on-demand"
+        // controls
+        autoPlay
+        muted
+      />
+      
     </div>
   );
 };
@@ -47,4 +37,43 @@ export default function App() {
       </Routes>
     </Router>
   );
+}
+
+
+const useCurrentPlaybackIdFromServer = () => {
+  const [playbackId, setPlaybackId] = useState("DS00Spx1CV902MCtPj5WknGlR102V5HFkDe");
+
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [lastPong, setLastPong] = useState("");
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      setIsConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socket.on('pong', () => {
+      setLastPong(new Date().toISOString());
+    });
+
+    socket.on('cmd', (data) => {
+      console.log(data);
+      // setPlaybackId(data.playbackId);
+    });
+
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('setActiveVideo');
+    };
+  }, []);
+
+  const sendPing = () => {
+    socket.emit('ping');
+  }
+
+  return playbackId;
 }
