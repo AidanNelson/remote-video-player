@@ -29,7 +29,6 @@ const useCurrentPlaybackIdFromServer = () => {
   useEffect(() => {
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('updateDisplayName', { displayName });
     });
 
     socket.on('disconnect', () => {
