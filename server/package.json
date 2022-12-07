@@ -6,7 +6,7 @@
   "scripts": {
     "start": "export ENVIRONMENT='development' && nodemon index.js",
     "buildAdminInterface": "cd admin && npm run build",
-    "production": "npm run buildAdminInterface && forever start index.js"
+    "production": "forever start index.js"
   },
   "author": "",
   "license": "ISC",
