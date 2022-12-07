@@ -1,7 +1,8 @@
 /* eslint-disable prefer-template */
 /* eslint-disable no-console */
 const express = require('express');
-const https = require('https');
+// const https = require('https');
+const http = require('http');
 const devcert = require('devcert');
 const fs = require('fs');
 const io = require('socket.io')();
@@ -39,10 +40,14 @@ async function main() {
       cert: fs.readFileSync(process.cwd() + '/certs/fullchain.pem'),
     };
   }
-  const server = https.createServer(ssl, app);
+  // const server = https.createServer(ssl, app);
+  const server = http.createServer(app);
 
   // have our HTTPS server listen on HTTPS standard port (443)
-  const port = 443;
+  // const port = 443;
+  // server.listen(port);
+  // console.log(`Server listening on https://localhost:${port}`);
+  const port = 3333;
   server.listen(port);
   console.log(`Server listening on https://localhost:${port}`);
 
