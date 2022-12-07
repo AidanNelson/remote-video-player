@@ -1,12 +1,14 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
+import * as UpChunk from '@mux/upchunk';
+import { useFilePicker } from 'use-file-picker';
 
 let SERVER_URL = 'https://aidan.town';
 
 if (process.env.NODE_ENV === 'development') {
   console.log('using development server');
-  SERVER_URL = 'https://localhost:443';
+  SERVER_URL = 'http://localhost:3333';
 }
 
 const socket = io(SERVER_URL);
@@ -24,6 +26,46 @@ function App() {
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [availablePlayerIds, setAvailablePlayerIds] = useState([]);
   const [activePlayerId, setActivePlayerId] = useState(0);
+
+  const [uploadUrl, setUploadUrl] = useState(false);
+
+  const [openFileSelector, { plainFiles, loading, errors }] = useFilePicker({
+    readAs: 'DataURL',
+    // accept: 'image/*',
+    // multiple: true,
+    limitFilesConfig: { max: 2 },
+    // minFileSize: 1,
+    readFilesContent: false,
+    maxFileSize: 500, // in megabytes
+  });
+
+  useEffect(() => {
+    console.log('file content: ', plainFiles);
+    if (plainFiles[0] && uploadUrl) {
+      const upload = UpChunk.createUpload({
+        // getUploadUrl is a function that resolves with the upload URL generated
+        // on the server-side
+        endpoint: uploadUrl,
+        // picker here is a file picker HTML element
+        file: plainFiles[0],
+        chunkSize: 5120, // Uploads the file in ~5mb chunks
+      });
+
+      // subscribe to events
+      upload.on('error', (err) => {
+        console.error('💥 🙀', err.detail);
+      });
+
+      upload.on('progress', (progress) => {
+        console.log('Uploaded', progress.detail, 'percent of this file.');
+      });
+
+      // subscribe to events
+      upload.on('success', (err) => {
+        console.log("Wrap it up, we're done here. 👋");
+      });
+    }
+  }, [plainFiles, uploadUrl]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -54,17 +96,24 @@ function App() {
       setAvailablePlayers(data);
     });
 
+    socket.on('uploadUrl', (data) => {
+      console.log('got mux upload url');
+      setUploadUrl(data.url);
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('availableVideos');
       socket.off('availablePlayers');
+      socket.off('uploadUrl');
     };
   }, []);
 
   useEffect(() => {
     console.log('active video id: ', activeSourceVideoID);
   }, [activeSourceVideoID]);
+
   useEffect(() => {
     console.log('active player id: ', activePlayerId);
   }, [activePlayerId]);
@@ -78,9 +127,21 @@ function App() {
     socket.emit('cmd', data);
   };
 
+  const getUploadUrl = () => {
+    socket.emit('getUploadUrl');
+  };
+
   return (
     <div>
       <h1>Connected: {'' + isConnected}</h1>
+      <button
+        onClick={() => {
+          openFileSelector();
+          getUploadUrl();
+        }}
+      >
+        Upload File
+      </button>
 
       <hr />
       <h1>Choose Video Source: </h1>

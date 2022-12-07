@@ -19,10 +19,22 @@ const muxClient = new Mux(); // Success!
 let availableVideos = [];
 
 async function getVideosFromMux() {
+  console.log('getting available videos from mux!');
   availableVideos = await muxClient.Video.Assets.list();
 }
 
-getVideosFromMux();
+async function getUploadUrlFromMux() {
+  const upload = await muxClient.Video.Uploads.create({
+    cors_origin: 'https://aidan.town',
+    new_asset_settings: {
+      playback_policy: 'public',
+    },
+  });
+
+  return {
+    url: upload.url,
+  };
+}
 
 async function main() {
   // Set up express to serve the admin console
@@ -61,6 +73,10 @@ async function main() {
     },
   });
 
+  setInterval(async () => {
+    await getVideosFromMux();
+    io.sockets.emit('availableVideos', availableVideos);
+  }, 10000);
   // keep track of our clients for any admin purposes...
   const clients = {};
 
@@ -77,6 +93,10 @@ async function main() {
 
     socket.on('getAvailableVideos', () => {
       socket.emit('availableVideos', availableVideos);
+    });
+
+    socket.on('getUploadUrl', async () => {
+      socket.emit('uploadUrl', await getUploadUrlFromMux());
     });
 
     // socket.on('getAvailablePlayers', async () => {

@@ -7,7 +7,7 @@ import io from 'socket.io-client';
 
 let SERVER_URL = 'https://aidan.town';
 if (process.env.NODE_ENV === 'development') {
-  SERVER_URL = 'https://localhost:443';
+  SERVER_URL = 'http://localhost:3333';
 }
 
 // const
@@ -15,7 +15,7 @@ const socket = io(SERVER_URL);
 
 const useCurrentPlaybackIdFromServer = () => {
   const [playbackId, setPlaybackId] = useState(
-    'DS00Spx1CV902MCtPj5WknGlR102V5HFkDe'
+    'L2IqXrUMVNSaRC5uCDxOQUhF5QH5TfB02pDeVZYhVzlA'
   );
 
   const [isConnected, setIsConnected] = useState(socket.connected);
