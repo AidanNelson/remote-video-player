@@ -71,7 +71,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    fullscreen: true,
+    // fullscreen: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged

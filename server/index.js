@@ -1,8 +1,7 @@
-const express = require("express");
-const https = require("https");
-const devcert = require("devcert");
-const fs = require("fs");
-
+const express = require('express');
+const https = require('https');
+const devcert = require('devcert');
+const fs = require('fs');
 
 const Mux = require('@mux/mux-node');
 
@@ -14,23 +13,21 @@ const muxClient = new Mux(); // Success!
 
 let availableVideos = [];
 
-
-
 async function main() {
   // Set up express to serve the admin console
   const app = express();
-  console.log("Serving static files at ", process.cwd() + "/admin/build");
-  app.use(express.static(process.cwd() + "/admin/build"));
+  console.log('Serving static files at ', process.cwd() + '/admin/build');
+  app.use(express.static(process.cwd() + '/admin/build'));
 
   // set up HTTPS server and SSL certificates
   let ssl;
-  if (process.env.ENVIRONMENT === "PRODUCTION") {
+  if (process.env.ENVIRONMENT === 'PRODUCTION') {
     ssl = {
-      key: fs.readFileSync(process.cwd() + "/certs/privkey.pem"),
-      cert: fs.readFileSync(process.cwd() + "/certs/fullchain.pem"),
+      key: fs.readFileSync(process.cwd() + '/certs/privkey.pem'),
+      cert: fs.readFileSync(process.cwd() + '/certs/fullchain.pem'),
     };
   } else {
-    ssl = await devcert.certificateFor("localhost");
+    ssl = await devcert.certificateFor('localhost');
   }
   const server = https.createServer(ssl, app);
 
@@ -40,11 +37,11 @@ async function main() {
   console.log(`Server listening on https://localhost:${port}`);
 
   // set up our socket.io server using the HTTPS server (with permissive CORS)
-  let io = require("socket.io")();
+  let io = require('socket.io')();
   io.listen(server, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
+      origin: '*',
+      methods: ['GET', 'POST'],
       credentials: true,
     },
   });
@@ -52,37 +49,48 @@ async function main() {
   // keep track of our clients for any admin purposes...
   const clients = {};
 
-  io.on("connection", (socket) => {
-    console.log("Client connected:", socket.id);
-    clients[socket.id] = {};
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    clients[socket.id] = { displayName: 'No Name Set' };
+    io.sockets.emit('availablePlayers', clients);
 
-    socket.on("getAvailableVideos", () => {
-      socket.emit("availableVideos", availableVideos);
-    })
+    socket.on('disconnect', () => {
+      console.log('disconnection');
+      delete clients[socket.id];
+      io.sockets.emit('availablePlayers', clients);
+    });
+    socket.on('getAvailableVideos', () => {
+      socket.emit('availableVideos', availableVideos);
+    });
 
-    socket.on("getAvailablePlayers", async () => {
-      const ids = await io.allSockets();
-      let idArray = Array.from(ids);
-      const data = {
-        ids: idArray
-      }
-      console.log('sending ',data);
-      socket.emit("availablePlayers", data);
-    })
+    // socket.on('getAvailablePlayers', async () => {
+    // const ids = await io.allSockets();
+    // let idArray = Array.from(ids);
+    // const data = {
+    //   ids: idArray,
+    // };
+    // console.log('sending ', data);
+    // socket.emit('availablePlayers', data);
 
-    socket.on("cmd", (data) => {
+    // });
+
+    socket.on('cmd', (data) => {
       console.log(`Received command:${data.type}`);
       console.log(`Sending command: ${data.type} to all clients.`);
-      io.sockets.emit("cmd", data);
+      io.sockets.emit('cmd', data);
+    });
+
+    socket.on('updateDisplayName', (data) => {
+      console.log('got updated display name: ', data.displayName);
+      clients[socket.id].displayName = data.displayName;
+      io.sockets.emit('availablePlayers', clients);
     });
   });
 }
 
 main();
 
-
-
-async function getVideosFromMux(){
- availableVideos = await muxClient.Video.Assets.list();
+async function getVideosFromMux() {
+  availableVideos = await muxClient.Video.Assets.list();
 }
 getVideosFromMux();

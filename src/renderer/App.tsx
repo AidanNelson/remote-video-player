@@ -1,30 +1,101 @@
+/* eslint-disable no-console */
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import MuxVideo from '@mux/mux-video-react';
-import {useState, useEffect} from "react";
+import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-const SERVER_URL = "https://aidan.town";
+let SERVER_URL = 'https://localhost:443';
+if (process.env.NODE_ENV === 'production') {
+  SERVER_URL = 'https://aidan.town';
+}
+
+// const
 const socket = io(SERVER_URL);
 
+const useCurrentPlaybackIdFromServer = () => {
+  const [playbackId, setPlaybackId] = useState(
+    'DS00Spx1CV902MCtPj5WknGlR102V5HFkDe'
+  );
+
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  const [displayName, setDisplayName] = useState(() => {
+    const name = window.localStorage.getItem('displayName');
+    if (name) return name;
+    return '';
+  });
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      setIsConnected(true);
+      socket.emit('updateDisplayName', { displayName });
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socket.on('cmd', (data) => {
+      console.log(data);
+      // TODO check for correct playerID
+      if (data.playerId === 0 || data.playerId === socket.id) {
+        setPlaybackId(data.videoId);
+      }
+    });
+
+    socket.on('displayName', (data) => {
+      setDisplayName(data.displayName);
+    });
+
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('cmd');
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('display name updated! saving to local storage');
+    window.localStorage.setItem('displayName', displayName);
+    socket.emit('updateDisplayName', { displayName });
+  }, [displayName]);
+
+  useEffect(() => {
+    console.log('Socket connected?', isConnected);
+  }, [isConnected]);
+
+  return { playbackId, displayName, setDisplayName };
+};
+
 const Hello = () => {
-  const currentPlaybackId = useCurrentPlaybackIdFromServer();
+  const { playbackId, displayName, setDisplayName } =
+    useCurrentPlaybackIdFromServer();
+
+  useEffect(() => {
+    console.log('Playback Id?', playbackId);
+  }, [playbackId]);
+
+  useEffect(() => {
+    // TODO better way to update display name
+    window.setDisplayName = setDisplayName;
+  }, [setDisplayName]);
+
+  useEffect(() => {
+    console.log('DisplayName:', displayName);
+  }, [displayName]);
+
   return (
     <div>
       <MuxVideo
-        style={{ height: '100%', maxWidth: '100%' }}
-        playbackId={currentPlaybackId}
-        // metadata={{
-        //   video_id: 'video-id-123456',
-        //   video_title: 'Super Interesting Video',
-        //   viewer_user_id: 'user-id-bc-789',
-        // }}
+        style={{ height: '100%', width: '100vw' }}
+        playbackId={playbackId}
         streamType="on-demand"
         // controls
         autoPlay
         muted
+        loop
       />
-      
     </div>
   );
 };
@@ -37,43 +108,4 @@ export default function App() {
       </Routes>
     </Router>
   );
-}
-
-
-const useCurrentPlaybackIdFromServer = () => {
-  const [playbackId, setPlaybackId] = useState("DS00Spx1CV902MCtPj5WknGlR102V5HFkDe");
-
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const [lastPong, setLastPong] = useState("");
-
-  useEffect(() => {
-    socket.on('connect', () => {
-      setIsConnected(true);
-    });
-
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    socket.on('pong', () => {
-      setLastPong(new Date().toISOString());
-    });
-
-    socket.on('cmd', (data) => {
-      console.log(data);
-      // setPlaybackId(data.playbackId);
-    });
-
-    return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('setActiveVideo');
-    };
-  }, []);
-
-  const sendPing = () => {
-    socket.emit('ping');
-  }
-
-  return playbackId;
 }
