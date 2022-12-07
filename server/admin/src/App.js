@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-let SERVER_URL = 'https://aidan.town"';
+let SERVER_URL = 'https://aidan.town';
 
 if (process.env.NODE_ENV === 'development') {
   console.log('using development server');
