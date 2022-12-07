@@ -19,8 +19,8 @@ let availableVideos = [];
 async function main() {
   // Set up express to serve the admin console
   const app = express();
-  console.log("Serving static files at ", process.cwd() + "/admin");
-  app.use(express.static(process.cwd() + "/admin"));
+  console.log("Serving static files at ", process.cwd() + "/admin/build");
+  app.use(express.static(process.cwd() + "/admin/build"));
 
   // set up HTTPS server and SSL certificates
   let ssl;
