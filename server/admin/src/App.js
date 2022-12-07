@@ -1,16 +1,14 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, { useState, useEffect } from 'react';
-import { act } from 'react-dom/test-utils';
 import io from 'socket.io-client';
 
-let SERVER_URL = 'https://localhost:443';
+let SERVER_URL = 'https://aidan.town"';
 
-if (process.env.NODE_ENV === 'production') {
-  console.log('using production server');
-  SERVER_URL = 'https://aidan.town';
+if (process.env.NODE_ENV === 'development') {
+  console.log('using development server');
+  SERVER_URL = 'https://localhost:443';
 }
-// const SERVER_URL = "https://aidan.town";
-// const SERVER_URL = "https://localhost:443"
+
 const socket = io(SERVER_URL);
 
 function App() {
@@ -59,7 +57,8 @@ function App() {
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      socket.off('pong');
+      socket.off('availableVideos');
+      socket.off('availablePlayers');
     };
   }, []);
 
@@ -149,5 +148,3 @@ function App() {
 }
 
 export default App;
-
-// function VideoSelectButton

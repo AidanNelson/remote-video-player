@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
+    "start": "export ENVIRONMENT='development' && nodemon index.js",
     "buildAdminInterface": "cd admin && npm run build",
-    "production": "export ENVIRONMENT='PRODUCTION' && npm run buildAdminInterface && forever start index.js"
+    "production": " npm run buildAdminInterface && forever start index.js"
   },
   "author": "",
   "license": "ISC",

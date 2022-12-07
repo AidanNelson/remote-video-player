@@ -1,17 +1,27 @@
+/* eslint-disable prefer-template */
+/* eslint-disable no-console */
 const express = require('express');
 const https = require('https');
 const devcert = require('devcert');
 const fs = require('fs');
+const io = require('socket.io')();
 
 const Mux = require('@mux/mux-node');
 
 // make it possible to read credentials from .env files
 const dotenv = require('dotenv');
+
 dotenv.config();
 // assume process.env.MUX_TOKEN_ID and process.env.MUX_TOKEN_SECRET contain your credentials
 const muxClient = new Mux(); // Success!
 
 let availableVideos = [];
+
+async function getVideosFromMux() {
+  availableVideos = await muxClient.Video.Assets.list();
+}
+
+getVideosFromMux();
 
 async function main() {
   // Set up express to serve the admin console
@@ -21,13 +31,13 @@ async function main() {
 
   // set up HTTPS server and SSL certificates
   let ssl;
-  if (process.env.ENVIRONMENT === 'PRODUCTION') {
+  if (process.env.ENVIRONMENT === 'development') {
+    ssl = await devcert.certificateFor('localhost');
+  } else {
     ssl = {
       key: fs.readFileSync(process.cwd() + '/certs/privkey.pem'),
       cert: fs.readFileSync(process.cwd() + '/certs/fullchain.pem'),
     };
-  } else {
-    ssl = await devcert.certificateFor('localhost');
   }
   const server = https.createServer(ssl, app);
 
@@ -37,7 +47,7 @@ async function main() {
   console.log(`Server listening on https://localhost:${port}`);
 
   // set up our socket.io server using the HTTPS server (with permissive CORS)
-  let io = require('socket.io')();
+
   io.listen(server, {
     cors: {
       origin: '*',
@@ -59,6 +69,7 @@ async function main() {
       delete clients[socket.id];
       io.sockets.emit('availablePlayers', clients);
     });
+
     socket.on('getAvailableVideos', () => {
       socket.emit('availableVideos', availableVideos);
     });
@@ -89,8 +100,3 @@ async function main() {
 }
 
 main();
-
-async function getVideosFromMux() {
-  availableVideos = await muxClient.Video.Assets.list();
-}
-getVideosFromMux();
