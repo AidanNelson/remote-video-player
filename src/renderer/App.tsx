@@ -61,7 +61,7 @@ const useCurrentPlaybackIdFromServer = () => {
 
     socket.on('cmd', (data) => {
       console.log(data);
-      // setPlaybackId(data.playbackId);
+      setPlaybackId(data.videoId);
     });
 
     return () => {
