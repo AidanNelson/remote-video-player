@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import * as UpChunk from '@mux/upchunk';
 import { useFilePicker } from 'use-file-picker';
@@ -22,6 +22,8 @@ function App() {
   const [activeSourceVideoID, setActiveSourceVideoID] = useState(
     'F02BZBmIAWp01Q3RTvRYR2gTKMl02rInzNNKR301KNlz8mA'
   );
+
+  const fileUploadStatusRef = useRef();
 
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [availablePlayerIds, setAvailablePlayerIds] = useState([]);
@@ -58,11 +60,13 @@ function App() {
 
       upload.on('progress', (progress) => {
         console.log('Uploaded', progress.detail, 'percent of this file.');
+        fileUploadStatusRef.current.innerText = `Uploaded ${progress.detail} % of this file.`;
       });
 
       // subscribe to events
       upload.on('success', (err) => {
         console.log("Wrap it up, we're done here. 👋");
+        fileUploadStatusRef.current.innerText = `Done! 🤩`;
       });
     }
   }, [plainFiles, uploadUrl]);
@@ -132,9 +136,18 @@ function App() {
   };
 
   return (
-    <div>
-      <h1>Connected: {'' + isConnected}</h1>
+    <div style={{ margin: '1em', padding: '1em' }}>
+      <h3>Status</h3>
+      <h4>
+        {isConnected ? 'Connected to server.' : 'NOT connected to server.'}
+      </h4>
+
+      <hr />
+      <h3>Upload Video</h3>
       <button
+        style={{
+          margin: '1em',
+        }}
         onClick={() => {
           openFileSelector();
           getUploadUrl();
@@ -142,68 +155,99 @@ function App() {
       >
         Upload File
       </button>
+      <div ref={fileUploadStatusRef}></div>
+      <hr />
+      <h3>Choose Video Source: </h3>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        {availableVideoPlaybackIds.map((id, index) => {
+          return (
+            <button
+              key={id}
+              style={{
+                margin: '1em',
+                padding: '0.2em',
+                backgroundColor: 'black',
+                border: `${
+                  activeSourceVideoID === id ? '5px solid red' : '0px'
+                }`,
+              }}
+              onClick={() => setActiveSourceVideoID(id)}
+            >
+              <img
+                style={{
+                  width: '210px',
+                  height: '90px',
+                  objectFit: 'cover',
+                }}
+                src={`https://image.mux.com/${id}/thumbnail.jpg?time=1`}
+              />
+            </button>
+          );
+        })}
+      </div>
 
       <hr />
-      <h1>Choose Video Source: </h1>
-      {availableVideoPlaybackIds.map((id, index) => {
-        return (
-          <button
-            key={id}
-            style={{
-              margin: '2em',
-              border: `${activeSourceVideoID === id ? '10px solid red' : ''}`,
-            }}
-            onClick={() => setActiveSourceVideoID(id)}
-          >
-            <img
-              style={{ maxWidth: '300px', maxHeight: '200px' }}
-              src={`https://image.mux.com/${id}/thumbnail.jpg?time=1`}
-            />
-          </button>
-        );
-      })}
 
-      <h1>Choose Target Players: </h1>
-      <button
+      <h3>Choose Target Player: </h3>
+      <div
         style={{
-          margin: '2em',
-          border: `${activePlayerId === 0 ? '10px solid red' : ''}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
         }}
-        key={0}
-        onClick={() => setActivePlayerId(0)}
       >
-        <p>ALL</p>
-      </button>
-      <button
-        style={{
-          margin: '2em',
-          border: `${activePlayerId === -1 ? '10px solid red' : ''}`,
-        }}
-        onClick={() => setActivePlayerId(-1)}
-      >
-        <p>NONE</p>
-      </button>
-
-      {availablePlayerIds.map((playerId, index) => {
-        if (playerId === socket.id) return null;
-        return (
-          <button
-            style={{
-              margin: '2em',
-              border: `${activePlayerId === playerId ? '10px solid red' : ''}`,
-            }}
-            key={playerId}
-            onClick={() => setActivePlayerId(playerId)}
-          >
-            <p>{availablePlayers[playerId].displayName}</p>
-          </button>
-        );
-      })}
+        <button
+          style={{
+            margin: '1em',
+            border: `${activePlayerId === 0 ? '5px solid red' : ''}`,
+            minWidth: '100px',
+          }}
+          key={0}
+          onClick={() => setActivePlayerId(0)}
+        >
+          <p>All Available Players</p>
+        </button>
+        {availablePlayerIds.map((playerId, index) => {
+          if (playerId === socket.id) return null;
+          return (
+            <button
+              style={{
+                margin: '1em',
+                border: `${activePlayerId === playerId ? '5px solid red' : ''}`,
+              }}
+              key={playerId}
+              onClick={() => setActivePlayerId(playerId)}
+            >
+              <p>{availablePlayers[playerId].displayName}</p>
+            </button>
+          );
+        })}
+      </div>
 
       <hr />
-      <button onClick={sendCMD}>
-        <h1>GO LIVE</h1>
-      </button>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <button
+          style={{ margin: '1em', color: 'white', backgroundColor: 'red' }}
+          onClick={sendCMD}
+        >
+          <h3>GO LIVE</h3>
+        </button>
+      </div>
     </div>
   );
 }
