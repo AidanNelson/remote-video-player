@@ -72,14 +72,15 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     // fullscreen: true,
-    icon: getAssetPath('icon.png'),
+    icon: getAssetPath('goose-icon.png'),
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
-  // mainWindow.maximize();
+  mainWindow.maximize();
+  mainWindow.setFullScreen(true);
   mainWindow.setMenuBarVisibility(false);
   // mainWindow.setKiosk(true);
 
