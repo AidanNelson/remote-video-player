@@ -38,7 +38,7 @@ function App() {
     limitFilesConfig: { max: 2 },
     // minFileSize: 1,
     readFilesContent: false,
-    maxFileSize: 500, // in megabytes
+    maxFileSize: 50000, // in megabytes
   });
 
   useEffect(() => {
