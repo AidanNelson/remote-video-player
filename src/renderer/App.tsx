@@ -2,11 +2,9 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import MuxVideo from '@mux/mux-video-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { useMousetrap } from 'use-mousetrap';
- 
-
 
 let SERVER_URL = 'https://aidan.town';
 if (process.env.NODE_ENV === 'development') {
@@ -26,7 +24,7 @@ const useCurrentPlaybackIdFromServer = () => {
   const [displayName, setDisplayName] = useState(() => {
     const name = window.localStorage.getItem('displayName');
     if (name) return name;
-    return '';
+    return 'media-player-0';
   });
 
   useEffect(() => {
@@ -63,8 +61,6 @@ const useCurrentPlaybackIdFromServer = () => {
     socket.emit('updateDisplayName', { displayName });
   }, [displayName]);
 
-
-
   useEffect(() => {
     console.log('Socket connected?', isConnected);
   }, [isConnected]);
@@ -90,44 +86,69 @@ const Hello = () => {
     setShouldShowInput(true);
     setTimeout(() => {
       setShouldShowInput(false);
-    },15000)
+    }, 15000);
   });
-  
+
   useMousetrap('ctrl+k', () => {
     setShouldShowInput(false);
   });
 
   return (
     <>
-    <div style={{width: "100vw", height: "100vh", overflow: "hidden"}}>
-      <MuxVideo
-        style={{ objectFit: "cover", width: "100%", height: "100%" }}
-        playbackId={playbackId}
-        streamType="on-demand"
-        // controls
-        autoPlay
-        muted
-        loop
-      />
-      
-    </div>
-    
-      {shouldShowInput && (
-        <div style={{ backgroundColor: "#ffeebb", margin: "1em", padding: "1em", position: "absolute", top: "50%", left: "50%"}}>
-      <form >
-        <div>
-          <input ref={inputRef} placeholder={displayName} id="displayName" type="text" name="text" />
-          <button type="button" onClick={() => {
-            if (inputRef.current){
-            setDisplayName(inputRef.current.value)
-            setShouldShowInput(false);
-            console.log('submitting new name');
-          }}}>Update Name</button>
-       </div>
-      </form>
+      <div
+        style={{
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+      >
+        <MuxVideo
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          playbackId={playbackId}
+          streamType="on-demand"
+          autoPlay
+          muted
+          loop
+        />
       </div>
-    )}
-    
+
+      {shouldShowInput && (
+        <div
+          style={{
+            zIndex: 1000,
+            backgroundColor: '#ffeebb',
+            margin: '1em',
+            padding: '2em',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+          }}
+        >
+          <form>
+            <div>
+              <input
+                ref={inputRef}
+                placeholder={displayName}
+                id="displayName"
+                type="text"
+                name="text"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (inputRef.current) {
+                    setDisplayName(inputRef.current.value);
+                    setShouldShowInput(false);
+                    console.log('submitting new name');
+                  }
+                }}
+              >
+                Update Name
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </>
   );
 };
