@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/media-has-caption */
+/* eslint-disable react/self-closing-comp */
 /* eslint-disable no-console */
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -11,12 +13,14 @@ if (process.env.NODE_ENV === 'development') {
   SERVER_URL = 'http://localhost:3333';
 }
 
+const useMux = false;
+
 // const
 const socket = io(SERVER_URL);
 
 const useCurrentPlaybackIdFromServer = () => {
   const [playbackId, setPlaybackId] = useState(
-    'L2IqXrUMVNSaRC5uCDxOQUhF5QH5TfB02pDeVZYhVzlA'
+    useMux ? 'L2IqXrUMVNSaRC5uCDxOQUhF5QH5TfB02pDeVZYhVzlA' : '1.mp4'
   );
 
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -74,6 +78,21 @@ const Hello = () => {
   const { playbackId, displayName, setDisplayName } =
     useCurrentPlaybackIdFromServer();
 
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    console.log(window.devicePixelRatio);
+  }, []);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    try {
+      videoRef.current.load();
+    } catch (err) {
+      console.error(err);
+    }
+  }, [playbackId]);
+
   useEffect(() => {
     console.log('Playback Id?', playbackId);
   }, [playbackId]);
@@ -102,16 +121,32 @@ const Hello = () => {
           overflow: 'hidden',
         }}
       >
-        <MuxVideo
+        <video
+          ref={videoRef}
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          autoPlay
+          muted
+          loop
+        >
+          <source
+            src={`http://localhost:3003/${playbackId}`}
+            type="video/mp4"
+          ></source>
+        </video>
+        {/* <img src="http://localhost:3000/icon.png" alt="my icon" /> */}
+        {/* <MuxVideo
           style={{ objectFit: 'cover', width: '100%', height: '100%' }}
           playbackId={playbackId}
           streamType="on-demand"
           autoPlay
           muted
           loop
-        />
+        /> */}
       </div>
 
+      {/* <video>
+        <source src="/flower.mp4" type="video/mp4"></source>
+      </video> */}
       {shouldShowInput && (
         <div
           style={{

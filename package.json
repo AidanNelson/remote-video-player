@@ -112,10 +112,13 @@
     "@mux/mux-video-react": "^0.7.1",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
+    "electron-serve": "^1.1.0",
     "electron-updater": "^5.2.3",
+    "finalhandler": "^1.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.4.0",
+    "serve-static": "^1.15.0",
     "socket.io-client": "^4.5.4",
     "use-mousetrap": "^1.0.4"
   },

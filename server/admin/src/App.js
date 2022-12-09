@@ -6,6 +6,8 @@ import { useFilePicker } from 'use-file-picker';
 
 let SERVER_URL = 'https://aidan.town';
 
+const useMux = false;
+
 if (process.env.NODE_ENV === 'development') {
   console.log('using development server');
   SERVER_URL = 'http://localhost:3333';
@@ -15,7 +17,6 @@ const socket = io(SERVER_URL);
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
-  // const [availableVideos, setAvailableVideos] = useState([]);
   const [availableVideoPlaybackIds, setAvailableVideoPlaybackIds] = useState(
     []
   );
@@ -74,8 +75,6 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('getAvailableVideos');
-      socket.emit('getAvailablePlayers');
     });
 
     socket.on('disconnect', () => {
@@ -85,12 +84,12 @@ function App() {
     socket.on('availableVideos', (data) => {
       console.log('got available videos', data);
       // setAvailableVideos(data);
-      let newIds = [];
-      data.map((value, index) => {
-        newIds.push(value.playback_ids[0].id);
-      });
-      setAvailableVideoPlaybackIds(newIds);
-      console.log(newIds);
+      // let newIds = [];
+      // data.map((value, index) => {
+      //   newIds.push(value.playback_ids[0].id);
+      // });
+      setAvailableVideoPlaybackIds(data.availableVideos);
+      // console.log(newIds);
     });
     socket.on('availablePlayers', (data) => {
       console.log('got available players', data);
@@ -143,20 +142,24 @@ function App() {
       </h4>
 
       <hr />
-      <h3>Upload Video</h3>
-      <button
-        style={{
-          margin: '1em',
-        }}
-        onClick={() => {
-          openFileSelector();
-          getUploadUrl();
-        }}
-      >
-        Upload File
-      </button>
-      <div ref={fileUploadStatusRef}></div>
-      <hr />
+      {useMux && (
+        <>
+          <h3>Upload Video</h3>
+          <button
+            style={{
+              margin: '1em',
+            }}
+            onClick={() => {
+              openFileSelector();
+              getUploadUrl();
+            }}
+          >
+            Upload File
+          </button>
+          <div ref={fileUploadStatusRef}></div>
+          <hr />
+        </>
+      )}
       <h3>Choose Video Source: </h3>
       <div
         style={{
@@ -180,14 +183,17 @@ function App() {
               }}
               onClick={() => setActiveSourceVideoID(id)}
             >
-              <img
-                style={{
-                  width: '210px',
-                  height: '90px',
-                  objectFit: 'cover',
-                }}
-                src={`https://image.mux.com/${id}/thumbnail.jpg?time=1`}
-              />
+              {useMux && (
+                <img
+                  style={{
+                    width: '210px',
+                    height: '90px',
+                    objectFit: 'cover',
+                  }}
+                  src={`https://image.mux.com/${id}/thumbnail.jpg?time=1`}
+                />
+              )}
+              {!useMux && <h3>{id}</h3>}
             </button>
           );
         })}

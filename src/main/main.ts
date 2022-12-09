@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 
 /**
@@ -9,19 +10,38 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
-import log from 'electron-log';
+import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron';
+// import { autoUpdater } from 'electron-updater';
+// import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
+const url = require('url');
+const http = require('http');
+const serveStatic = require('serve-static');
+const finalhandler = require('finalhandler');
+
+const serve = serveStatic('./videos');
+// Create server
+
+const server = http.createServer((req, res) => {
+  serve(req, res, finalhandler(req, res));
+});
+
+// Listen
+server.listen(3003);
+
+// const serve = require('electron-serve');
+
+// const loadURL = serve({ directory: 'renderer' });
+
+// class AppUpdater {
+//   constructor() {
+//     log.transports.file.level = 'info';
+//     autoUpdater.logger = log;
+//     autoUpdater.checkForUpdatesAndNotify();
+//   }
+// }
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -79,8 +99,10 @@ const createWindow = async () => {
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
+
+  // await loadURL(mainWindow);
   mainWindow.maximize();
-  mainWindow.setFullScreen(true);
+  // mainWindow.setFullScreen(true);
   mainWindow.setMenuBarVisibility(false);
   // mainWindow.setKiosk(true);
 
@@ -96,12 +118,13 @@ const createWindow = async () => {
       mainWindow.show();
     }
   });
-  mainWindow.webContents.on('dom-ready', (event)=> {
-    if (mainWindow){
-    let css = '* { cursor: none !important; }';
-    mainWindow.webContents.insertCSS(css);
-  }
-});
+
+  mainWindow.webContents.on('dom-ready', () => {
+    if (mainWindow) {
+      const css = '* { cursor: none !important; }';
+      mainWindow.webContents.insertCSS(css);
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -111,14 +134,14 @@ const createWindow = async () => {
   menuBuilder.buildMenu();
 
   // Open urls in the user's browser
-  mainWindow.webContents.setWindowOpenHandler((edata) => {
-    shell.openExternal(edata.url);
-    return { action: 'deny' };
-  });
+  // mainWindow.webContents.setWindowOpenHandler((edata) => {
+  //   shell.openExternal(edata.url);
+  //   return { action: 'deny' };
+  // });
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
-  new AppUpdater();
+  // new AppUpdater();
 };
 
 /**
@@ -136,6 +159,17 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    protocol.registerFileProtocol('cats', (request, callback) => {
+      console.log('got request:', request);
+      const filePath =
+        'file:///Users/aidannelson/Desktop/testVideos/bbb_edit.mp4';
+      // const filePath = url.fileURLToPath(
+      //   'file://' + request.url.slice('cats://'.length)
+      // );
+      console.log('returning file path:', filePath);
+      // eslint-disable-next-line promise/no-callback-in-promise
+      callback(filePath);
+    });
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the

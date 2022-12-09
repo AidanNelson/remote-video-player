@@ -16,9 +16,15 @@ const muxClient = new Mux(); // Success!
 
 let availableVideos = [];
 
+const useMux = false;
+
 async function getVideosFromMux() {
   console.log('getting available videos from mux!');
-  availableVideos = await muxClient.Video.Assets.list();
+  if (useMux) {
+    availableVideos = await muxClient.Video.Assets.list();
+  } else {
+    availableVideos = ['1.mp4', '2.mp4', '3.mp4', '4.mp4', '5.mp4'];
+  }
 }
 
 async function getUploadUrlFromMux() {
@@ -56,7 +62,7 @@ async function main() {
 
   setInterval(async () => {
     await getVideosFromMux();
-    io.sockets.emit('availableVideos', availableVideos);
+    io.sockets.emit('availableVideos', { availableVideos });
   }, 10000);
   // keep track of our clients for any admin purposes...
   const clients = {};
@@ -72,13 +78,11 @@ async function main() {
       io.sockets.emit('availablePlayers', clients);
     });
 
-    socket.on('getAvailableVideos', () => {
-      socket.emit('availableVideos', availableVideos);
-    });
-
-    socket.on('getUploadUrl', async () => {
-      socket.emit('uploadUrl', await getUploadUrlFromMux());
-    });
+    if (useMux) {
+      socket.on('getUploadUrl', async () => {
+        socket.emit('uploadUrl', await getUploadUrlFromMux());
+      });
+    }
 
     socket.on('cmd', (data) => {
       console.log(`Received command:${data.type}`);
