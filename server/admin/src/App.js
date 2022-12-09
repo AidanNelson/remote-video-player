@@ -31,6 +31,7 @@ function App() {
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [availablePlayerIds, setAvailablePlayerIds] = useState([]);
   const [activePlayerId, setActivePlayerId] = useState(0);
+  const [activePlayerIds, setActivePlayerIds] = useState([]);
 
   const [uploadUrl, setUploadUrl] = useState(false);
 
@@ -122,7 +123,7 @@ function App() {
     if (!activeVideoSource) return;
     const data = {
       type: 'play',
-      playerId: activePlayerId,
+      playerIds: activePlayerIds,
       videoId: activeVideoSource.id,
       playbackType: activeVideoSource.type,
     };
@@ -133,6 +134,31 @@ function App() {
     socket.emit('getUploadUrl');
   };
 
+  // const addToActivePlayers = (id) => {
+  //   setActivePlayerIds((curr) => {
+  //     if (curr.includes(id)) return;
+  //     curr.push(id);
+  //   });
+  // };
+  // const removeFromActivePlayers = (id) => {
+  //   setActivePlayerIds((curr) => {
+  //     const foundIndex = curr.indexOf(id);
+  //     if (foundIndex > 0) {
+  //       curr.splice(foundIndex, 1);
+  //     }
+  //   });
+  // };
+
+  // https://wweb.dev/blog/how-to-toggle-an-array-item-in-react-state/
+  const toggleActivePlayerMembership = (id) => {
+    setActivePlayerIds((curr) => {
+      const arr = curr.includes(id)
+        ? curr.filter((i) => i !== id) // remove item
+        : [...curr, id]; // add item
+      return arr;
+    });
+  };
+
   return (
     <div style={{ margin: '1em', padding: '1em' }}>
       <h3>Status</h3>
@@ -141,24 +167,21 @@ function App() {
       </h4>
 
       <hr />
-      {useMux && (
-        <>
-          <h3>Upload Video</h3>
-          <button
-            style={{
-              margin: '1em',
-            }}
-            onClick={() => {
-              openFileSelector();
-              getUploadUrl();
-            }}
-          >
-            Upload File
-          </button>
-          <div ref={fileUploadStatusRef}></div>
-          <hr />
-        </>
-      )}
+
+      <h3>Upload Video to streaming server:</h3>
+      <button
+        style={{
+          margin: '1em',
+        }}
+        onClick={() => {
+          openFileSelector();
+          getUploadUrl();
+        }}
+      >
+        Upload File
+      </button>
+      <div ref={fileUploadStatusRef}></div>
+      <hr />
       <h3>Choose Video Source: </h3>
       <div style={{ textAlign: 'center' }}>
         <h3>LOCAL VIDEOS</h3>
@@ -256,11 +279,27 @@ function App() {
         <button
           style={{
             margin: '1em',
-            border: `${activePlayerId === 0 ? '5px solid red' : ''}`,
+            border: `5px solid blue`,
+            minWidth: '100px',
+          }}
+          key={'clear'}
+          onClick={() => {
+            setActivePlayerIds([]);
+          }}
+        >
+          <p>Clear Selected</p>
+        </button>
+        <button
+          style={{
+            margin: '1em',
+            border: `${activePlayerIds.includes(0) ? '5px solid red' : ''}`,
             minWidth: '100px',
           }}
           key={0}
-          onClick={() => setActivePlayerId(0)}
+          onClick={() => {
+            // setActivePlayerId(0);
+            toggleActivePlayerMembership(0);
+          }}
         >
           <p>All Available Players</p>
         </button>
@@ -270,10 +309,15 @@ function App() {
             <button
               style={{
                 margin: '1em',
-                border: `${activePlayerId === playerId ? '5px solid red' : ''}`,
+                border: `${
+                  activePlayerIds.includes(playerId) ? '5px solid red' : ''
+                }`,
               }}
               key={playerId}
-              onClick={() => setActivePlayerId(playerId)}
+              onClick={() => {
+                // setActivePlayerId(0);
+                toggleActivePlayerMembership(playerId);
+              }}
             >
               <p>{availablePlayers[playerId].displayName}</p>
             </button>

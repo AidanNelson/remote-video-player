@@ -40,7 +40,7 @@ const useCurrentPlaybackIdFromServer = () => {
     socket.on('cmd', (data) => {
       console.log(data);
       // TODO check for correct playerID
-      if (data.playerId === 0 || data.playerId === socket.id) {
+      if (data.playerIds.includes(0) || data.playerIds.includes(socket.id)) {
         setPlaybackId(data.videoId);
         setPlaybackType(data.playbackType ? data.playbackType : 'LOCAL'); // default to local file playback
       }
