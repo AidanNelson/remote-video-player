@@ -13,15 +13,12 @@ if (process.env.NODE_ENV === 'development') {
   SERVER_URL = 'http://localhost:3333';
 }
 
-const useMux = false;
-
 // const
 const socket = io(SERVER_URL);
 
 const useCurrentPlaybackIdFromServer = () => {
-  const [playbackId, setPlaybackId] = useState(
-    useMux ? 'L2IqXrUMVNSaRC5uCDxOQUhF5QH5TfB02pDeVZYhVzlA' : '1.mp4'
-  );
+  const [playbackId, setPlaybackId] = useState('1.mp4');
+  const [playbackType, setPlaybackType] = useState('LOCAL');
 
   const [isConnected, setIsConnected] = useState(socket.connected);
 
@@ -45,6 +42,7 @@ const useCurrentPlaybackIdFromServer = () => {
       // TODO check for correct playerID
       if (data.playerId === 0 || data.playerId === socket.id) {
         setPlaybackId(data.videoId);
+        setPlaybackType(data.playbackType ? data.playbackType : 'LOCAL'); // default to local file playback
       }
     });
 
@@ -69,13 +67,13 @@ const useCurrentPlaybackIdFromServer = () => {
     console.log('Socket connected?', isConnected);
   }, [isConnected]);
 
-  return { playbackId, displayName, setDisplayName };
+  return { playbackId, displayName, setDisplayName, playbackType };
 };
 
-const Hello = () => {
+const MediaPlayer = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [shouldShowInput, setShouldShowInput] = useState(false);
-  const { playbackId, displayName, setDisplayName } =
+  const { playbackId, displayName, setDisplayName, playbackType } =
     useCurrentPlaybackIdFromServer();
 
   const videoRef = useRef(null);
@@ -121,32 +119,31 @@ const Hello = () => {
           overflow: 'hidden',
         }}
       >
-        <video
-          ref={videoRef}
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-          autoPlay
-          muted
-          loop
-        >
-          <source
-            src={`http://localhost:3003/${playbackId}`}
-            type="video/mp4"
-          ></source>
-        </video>
-        {/* <img src="http://localhost:3000/icon.png" alt="my icon" /> */}
-        {/* <MuxVideo
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-          playbackId={playbackId}
-          streamType="on-demand"
-          autoPlay
-          muted
-          loop
-        /> */}
+        {playbackType === 'LOCAL' && (
+          <video
+            ref={videoRef}
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            autoPlay
+            muted
+            loop
+          >
+            <source
+              src={`http://localhost:3003/${playbackId}`}
+              type="video/mp4"
+            ></source>
+          </video>
+        )}
+        {playbackType === 'MUX' && (
+          <MuxVideo
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            playbackId={playbackId}
+            streamType="on-demand"
+            autoPlay
+            muted
+            loop
+          />
+        )}
       </div>
-
-      {/* <video>
-        <source src="/flower.mp4" type="video/mp4"></source>
-      </video> */}
       {shouldShowInput && (
         <div
           style={{
@@ -192,7 +189,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Hello />} />
+        <Route path="/" element={<MediaPlayer />} />
       </Routes>
     </Router>
   );

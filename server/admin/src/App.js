@@ -20,9 +20,11 @@ function App() {
   const [availableVideoPlaybackIds, setAvailableVideoPlaybackIds] = useState(
     []
   );
+  const [availableVideos, setAvailableVideos] = useState([]);
   const [activeSourceVideoID, setActiveSourceVideoID] = useState(
     'F02BZBmIAWp01Q3RTvRYR2gTKMl02rInzNNKR301KNlz8mA'
   );
+  const [activeVideoSource, setActiveVideoSource] = useState(null);
 
   const fileUploadStatusRef = useRef();
 
@@ -83,14 +85,9 @@ function App() {
 
     socket.on('availableVideos', (data) => {
       console.log('got available videos', data);
-      // setAvailableVideos(data);
-      // let newIds = [];
-      // data.map((value, index) => {
-      //   newIds.push(value.playback_ids[0].id);
-      // });
-      setAvailableVideoPlaybackIds(data.availableVideos);
-      // console.log(newIds);
+      setAvailableVideos(data.availableVideos);
     });
+
     socket.on('availablePlayers', (data) => {
       console.log('got available players', data);
       let playerIds = Object.keys(data);
@@ -122,10 +119,12 @@ function App() {
   }, [activePlayerId]);
 
   const sendCMD = () => {
+    if (!activeVideoSource) return;
     const data = {
       type: 'play',
       playerId: activePlayerId,
-      videoId: activeSourceVideoID,
+      videoId: activeVideoSource.id,
+      playbackType: activeVideoSource.type,
     };
     socket.emit('cmd', data);
   };
@@ -161,6 +160,9 @@ function App() {
         </>
       )}
       <h3>Choose Video Source: </h3>
+      <div style={{ textAlign: 'center' }}>
+        <h3>LOCAL VIDEOS</h3>
+      </div>
       <div
         style={{
           display: 'flex',
@@ -169,31 +171,72 @@ function App() {
           flexWrap: 'wrap',
         }}
       >
-        {availableVideoPlaybackIds.map((id, index) => {
+        {availableVideos.map((videoInfo, index) => {
+          if (!(videoInfo.type === 'LOCAL')) return null;
           return (
             <button
-              key={id}
+              key={videoInfo.id}
               style={{
                 margin: '1em',
                 padding: '0.2em',
                 backgroundColor: 'black',
                 border: `${
-                  activeSourceVideoID === id ? '5px solid red' : '0px'
+                  activeVideoSource?.id === videoInfo.id
+                    ? '5px solid red'
+                    : '0px'
                 }`,
               }}
-              onClick={() => setActiveSourceVideoID(id)}
+              onClick={() => setActiveVideoSource(videoInfo)}
             >
-              {useMux && (
-                <img
-                  style={{
-                    width: '210px',
-                    height: '90px',
-                    objectFit: 'cover',
-                  }}
-                  src={`https://image.mux.com/${id}/thumbnail.jpg?time=1`}
-                />
-              )}
-              {!useMux && <h3>{id}</h3>}
+              <h3
+                style={{
+                  color: 'white',
+                  paddingLeft: '1em',
+                  paddingRight: '1em',
+                }}
+              >
+                {videoInfo.id}
+              </h3>
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <h3>STREAMING VIDEOS (max 1080p resolution):</h3>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        {availableVideos.map((videoInfo, index) => {
+          if (!(videoInfo.type === 'MUX')) return null;
+          return (
+            <button
+              key={videoInfo.id}
+              style={{
+                margin: '1em',
+                padding: '0.2em',
+                backgroundColor: 'black',
+                border: `${
+                  activeVideoSource?.id === videoInfo.id
+                    ? '5px solid red'
+                    : '0px'
+                }`,
+              }}
+              onClick={() => setActiveVideoSource(videoInfo)}
+            >
+              <img
+                style={{
+                  width: '210px',
+                  height: '90px',
+                  objectFit: 'cover',
+                }}
+                src={`https://image.mux.com/${videoInfo.id}/thumbnail.jpg?time=1`}
+              />
             </button>
           );
         })}

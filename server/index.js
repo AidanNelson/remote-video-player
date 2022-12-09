@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable prefer-template */
 /* eslint-disable no-console */
 const express = require('express');
@@ -16,15 +17,33 @@ const muxClient = new Mux(); // Success!
 
 let availableVideos = [];
 
+const localVideos = ['1.mp4', '2.mp4', '3.mp4', '4.mp4', '5.mp4'];
+
 const useMux = false;
 
 async function getVideosFromMux() {
   console.log('getting available videos from mux!');
-  if (useMux) {
-    availableVideos = await muxClient.Video.Assets.list();
-  } else {
-    availableVideos = ['1.mp4', '2.mp4', '3.mp4', '4.mp4', '5.mp4'];
+  let newVids = [];
+  // if (useMux) {
+  const muxVids = await muxClient.Video.Assets.list();
+
+  for (let i = 0; i < muxVids.length; i++) {
+    newVids.push({
+      type: 'MUX',
+      id: muxVids[i].playback_ids[0].id,
+    });
   }
+
+  for (let i = 0; i < localVideos.length; i++) {
+    newVids.push({
+      type: 'LOCAL',
+      id: localVideos[i],
+    });
+  }
+
+  availableVideos = newVids;
+
+  console.log(newVids);
 }
 
 async function getUploadUrlFromMux() {
@@ -64,6 +83,7 @@ async function main() {
     await getVideosFromMux();
     io.sockets.emit('availableVideos', { availableVideos });
   }, 10000);
+  getVideosFromMux();
   // keep track of our clients for any admin purposes...
   const clients = {};
 
@@ -71,6 +91,7 @@ async function main() {
     console.log('Client connected:', socket.id);
     clients[socket.id] = { displayName: 'No Name Set' };
     io.sockets.emit('availablePlayers', clients);
+    socket.emit('availableVideos', { availableVideos });
 
     socket.on('disconnect', () => {
       console.log('disconnection');
