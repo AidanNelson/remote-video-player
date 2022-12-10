@@ -16,7 +16,6 @@ import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
-const url = require('url');
 const http = require('http');
 const serveStatic = require('serve-static');
 const finalhandler = require('finalhandler');
@@ -24,16 +23,13 @@ const finalhandler = require('finalhandler');
 const serve = serveStatic('./videos');
 // Create server
 
+//@ts-ignore
 const server = http.createServer((req, res) => {
   serve(req, res, finalhandler(req, res));
 });
 
 // Listen
 server.listen(3003);
-
-// const serve = require('electron-serve');
-
-// const loadURL = serve({ directory: 'renderer' });
 
 // class AppUpdater {
 //   constructor() {
@@ -100,9 +96,8 @@ const createWindow = async () => {
     },
   });
 
-  // await loadURL(mainWindow);
   mainWindow.maximize();
-  // mainWindow.setFullScreen(true);
+  mainWindow.setFullScreen(true);
   mainWindow.setMenuBarVisibility(false);
   // mainWindow.setKiosk(true);
 
@@ -119,6 +114,7 @@ const createWindow = async () => {
     }
   });
 
+  // insert css to remove cursor throughout app
   mainWindow.webContents.on('dom-ready', () => {
     if (mainWindow) {
       const css = '* { cursor: none !important; }';
@@ -159,17 +155,6 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
-    protocol.registerFileProtocol('cats', (request, callback) => {
-      console.log('got request:', request);
-      const filePath =
-        'file:///Users/aidannelson/Desktop/testVideos/bbb_edit.mp4';
-      // const filePath = url.fileURLToPath(
-      //   'file://' + request.url.slice('cats://'.length)
-      // );
-      console.log('returning file path:', filePath);
-      // eslint-disable-next-line promise/no-callback-in-promise
-      callback(filePath);
-    });
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
