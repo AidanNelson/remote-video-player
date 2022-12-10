@@ -46,10 +46,6 @@ const useCurrentPlaybackIdFromServer = () => {
       }
     });
 
-    socket.on('displayName', (data) => {
-      setDisplayName(data.displayName);
-    });
-
     return () => {
       socket.off('connect');
       socket.off('disconnect');
@@ -76,13 +72,10 @@ const MediaPlayer = () => {
   const { playbackId, displayName, setDisplayName, playbackType } =
     useCurrentPlaybackIdFromServer();
 
-  const videoRef = useRef(null);
+  const videoRef = useRef<null | HTMLVideoElement>(null);
 
   useEffect(() => {
-    console.log(window.devicePixelRatio);
-  }, []);
-
-  useEffect(() => {
+    // force reload on updated content
     if (!videoRef.current) return;
     try {
       videoRef.current.load();
@@ -129,6 +122,12 @@ const MediaPlayer = () => {
           >
             <source
               src={`http://localhost:3003/${playbackId}`}
+              type="video/mp4"
+            ></source>
+
+            {/* Fallback Source */}
+            <source
+              src={`http://localhost:3003/1.mp4`}
               type="video/mp4"
             ></source>
           </video>
