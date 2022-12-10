@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable react/self-closing-comp */
 /* eslint-disable no-console */
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import MuxVideo from '@mux/mux-video-react';
 import { useState, useEffect, useRef } from 'react';
@@ -185,11 +184,5 @@ const MediaPlayer = () => {
 };
 
 export default function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MediaPlayer />} />
-      </Routes>
-    </Router>
-  );
+  return <MediaPlayer />;
 }

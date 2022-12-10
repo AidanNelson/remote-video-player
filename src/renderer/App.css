@@ -3,16 +3,9 @@
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
 body {
-  /* position: relative; */
   color: white;
   height: 100vh;
   width: 100vw;
-  /* background: linear-gradient(
-    200.96deg,
-    #626262 -29.09%,
-    #dd5789 51.77%,
-    #0011ff 129.35%
-  ); */
   background-color: black;
   font-family: sans-serif;
   overflow-y: hidden;
