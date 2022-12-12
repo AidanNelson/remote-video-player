@@ -108,6 +108,13 @@ async function main() {
     io.sockets.emit('availablePlayers', clients);
     socket.emit('availableVideos', { availableVideos });
 
+    socket.on('isAdmin', () => {
+      if (clients[socket.id]) {
+        delete clients[socket.id];
+      }
+      io.sockets.emit('availablePlayers', clients);
+    });
+
     socket.on('disconnect', () => {
       console.log('disconnection');
       delete clients[socket.id];

@@ -78,6 +78,7 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => {
       setIsConnected(true);
+      socket.emit('isAdmin');
     });
 
     socket.on('disconnect', () => {
